@@ -1,0 +1,15 @@
+{
+  "name": "megutelegrambot",
+  "version": "1.0.0",
+  "description": "Telegram bot for MEGU",
+  "main": "index.js",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.28.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "DannyD",
+  "license": "ISC"
+}
