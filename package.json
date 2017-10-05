@@ -4,7 +4,8 @@
   "description": "Telegram bot for MEGU",
   "main": "index.js",
   "dependencies": {
-    "node-telegram-bot-api": "^0.28.0"
+    "node-telegram-bot-api": "^0.28.0",
+    "telegraf": "^3.12.1"
   },
   "devDependencies": {},
   "scripts": {
