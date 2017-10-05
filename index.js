@@ -1,60 +1,59 @@
 const TelegramBot = require('node-telegram-bot-api');
 const request = require('request');
 const cheerio = require('cheerio');
-const token = '329099307:AAGYQ0B_7N7PATJLJck6RYmRP620jbzmCDI';
+var _ = require('lodash');
+const Telegraf = require('telegraf');
+const commandParts = require('telegraf-command-parts');
+const token = '461140243:AAHs1yfaN6Vu5wKO5K2Sz_BAAq3QnFWVPOU';
+const config = require("./config").config;
+const ScheduleParser = require("./ScheduleParser").ExcelScheduleParser;
+const fs = require('fs');
 
-
-
-// Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, { polling: true });
-
-// Matches "/echo [whatever]"
-bot.onText(/\/echo (.+)/, (msg, match) => {
-    // 'msg' is the received Message from Telegram
-    // 'match' is the result of executing the regexp above on the text content
-    // of the message
-
-    const chatId = msg.chat.id;
-    const resp = match[1]; // the captured "whatever"
-
-    // send back the matched "whatever" to the chat
-    bot.sendMessage(chatId, resp);
+var parser = new ScheduleParser();
+var groups = parser.parseCourses(`${__dirname}/schedule.xlsx`);
+var schedule;
+groups.then((result) => {
+    console.log("Groups", schedule = result);
 });
 
-// Listen for any kind of message. There are different kinds of
-// messages.
-bot.on('message', (msg) => {
-    const chatId = msg.chat.id;
 
-    var Hi = "hi";
+const app = new Telegraf(token);
+app.use(commandParts());
 
-    var SheduleTest = '/s';
-    var Shedule = "/r";
-    var SheduleUrl = "http://cyber.regi.rovno.ua/rozklad-zanyat/";
-    var pdfLinks = [];
-
-    var Contacts = "/contacts";
-
-    var blala = 'Українська освіта стаціонар';
-
-    if (msg.text.toLowerCase().indexOf(Hi) === 0) {
-        bot.sendMessage(chatId, 'Wasup!');
-    } else if (msg.text.toLowerCase().indexOf(Shedule) === 0) {
-        request(SheduleUrl, function(error, response, body) {
-            var $ = cheerio.load(body);
-            $('a.gde-link').each(function(i, elem) {
-                pdfLinks[i] = $(this).attr('href');
-            });
-            // var ukrainianShedule = $('a.gde-link').eq(0).attr('href');
-            var res = pdfLinks.join('\n');
-            // console.log(res);
-            bot.sendMessage(chatId, res);
-        });
-    } else if (msg.text.toLowerCase().indexOf(Contacts) === 0) {
-        request(SheduleUrl, function(error, response, body) {
-            var $ = cheerio.load(body);
-            var contactText = $('.textwidget', '#text-6').text();
-            bot.sendMessage(chatId, contactText);
-        });
-    }
+app.command(config.commands.Start, ({from, reply}) => {
+    console.log("start");
+    return reply("Welcome!");
 });
+
+
+
+app.command(config.commands.Schedule, ({state: {command}, reply}) => {    
+    console.log(command);
+    var group = command.args.toLowerCase().replace("/\s+/", "");
+    reply("Searching... " + group);
+    try {
+        var g = _(schedule).find(g => g.name.toLowerCase().replace("/\s+/", "") == group)
+        console.log(g);
+        if(!g) return reply("Group wasn't found");
+        var lessons = "";
+        for(var day in g.lessons) {
+            console.log(day);        
+            var groupLessons = g.lessons[day];
+            lessons += day + ": \n";
+            for(var i = 0; i < groupLessons.length; i ++) {
+                var l = groupLessons[i];
+                lessons += `${l.name} ${l.teacher} ${l.room}\n`;
+            }
+            lessons += "---------------------------\n"
+        }
+        
+        console.log(lessons);
+        return reply((lessons || "Not found").toString());
+    } catch (e) {
+        return reply(e.message);
+    }    
+});
+
+app.hears('hi', (ctx) => ctx.reply('Hey there!'))
+app.on('sticker', (ctx) => ctx.reply('👍'));
+app.startPolling();
