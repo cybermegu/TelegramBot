@@ -18,23 +18,19 @@ interface IScheduleParser {
 
 class ExcelScheduleParser implements IScheduleParser {
 
-    parse( data: any) : Group[] {
-        var doc = xlsx1.readFile(data);
-        var first_sheet_name = doc.SheetNames[0];        
-        var worksheet = doc.Sheets[first_sheet_name];
-        var result : Group[] = [];
-        
-        ExcelScheduleParser.GroupCells.forEach(element => {                 
-            result.push(this.parseGroupLessons(worksheet, element));
-        });
-
-        return result;
-    }
-
     private static NameToNumberLetter : {[c : string] : string } = {
 
     };
 
+    static CellToLeftCell : {[leftCell: string] : string} = {
+        "Z" : "S",
+        "J" : "C",
+        "AP" : "AI",
+        "BF" : "AY",
+        "BV" : "BO",
+
+    };
+        
     private static DaysCells = ["A8", "A21", "A34", "A47", "A60"];
     private static GroupCells = ["C", "J", "S", "Z", "AI", "AP", "AY", "BF", "BO", "BV", "CE"];
     private static DayRange : { [day: string]: number[] } = {
@@ -44,6 +40,19 @@ class ExcelScheduleParser implements IScheduleParser {
         "Thursday": [47, 50, 53, 56],
         "Friday": [60, 63, 66, 69],
     };
+
+    parse(data: any) : Group[] {
+        var doc = xlsx1.readFile(data);
+        var first_sheet_name = doc.SheetNames[0];        
+        var worksheet = doc.Sheets[first_sheet_name];
+        var result : Group[] = [];
+        console.log(worksheet["I11"], worksheet["B11"]);
+        ExcelScheduleParser.GroupCells.forEach(element => {                 
+            result.push(this.parseGroupLessons(worksheet, element));
+        });
+
+        return result;
+    }    
 
     static colName(n: number) : string {
         var ordA = 'a'.charCodeAt(0);
@@ -84,6 +93,7 @@ class ExcelScheduleParser implements IScheduleParser {
     }    
 
     static getColNumber(col: string) : number {
+        if(!col) throw new Error(`getColNumber - invalid argument passed '${col}'`)        
         col = col.toLowerCase();
         var ordA = 'a'.charCodeAt(0);
         var ordZ = 'z'.charCodeAt(0);
@@ -95,10 +105,28 @@ class ExcelScheduleParser implements IScheduleParser {
         return len + this.getColNumber(col[1]);
     }
 
-    parseLessonName(worksheet: any, groupId: string, val: number) : string {
+    /**
+     * Parse lesson name. 
+     * @param worksheet 
+     * @param groupId 
+     * @param val 
+     */
+    parseLessonName(worksheet: any, groupId: string, val: number) : string {        
         var lessonCell = groupId + val;
         var lessonCellVal = worksheet[lessonCell];
-
+        if(!lessonCellVal) {            
+            // Get previous col number.
+            var prevCol = ExcelScheduleParser.colName(ExcelScheduleParser.getColNumber(groupId) - 1);            
+            // If cell belongs to two groups then original cell value is "undefined"
+            // So if it's the case return value for left cell.            
+            // If previous column is not the time then its just empty column that belongs to both groups,
+            // so we gotta use previous.            
+            if(!worksheet[prevCol + val] || !worksheet[prevCol + val].w) {                
+                var left = ExcelScheduleParser.CellToLeftCell[groupId];
+                if (!left) return "--- No Lesson ---";
+                return this.parseLessonName(worksheet, left, val)
+            }
+        }
         return !lessonCellVal ? "--- No Lesson ---" : lessonCellVal.v;
     }
 

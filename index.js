@@ -18,7 +18,8 @@ var parser = new ScheduleParser();
 var groups = parser.parseCourses(`${__dirname}/schedule.xlsx`);
 var schedule;
 groups.then((result) => {
-     schedule = result;
+    console.log("Parsed groups. Count: ", result.length);
+    schedule = result;
 });
 
 const app = new Telegraf(token());
@@ -30,13 +31,14 @@ app.command(config.commands.Start, ({from, reply}) => {
     return reply("Welcome!");
 });
 
-app.command(config.commands.Schedule, ({state: {command}, reply}) => {    
-    console.log(command);
+app.command(config.commands.Schedule, ({state: {command}, reply}) => {        
     var group = command.args.toLowerCase().replace("/\s+/", "");
     reply("Searching... " + group);
     try {
-        var g = _(schedule).find(g => g.name.toLowerCase().replace("/\s+/", "") == group)
-        console.log(g);
+        var g = _(schedule).find(g => {
+            return g.name.toLowerCase().replace("/\s+/", "") == group
+        });
+        
         if(!g) return reply("Group wasn't found");
         var lessons = "";
         for(var day in g.lessons) {

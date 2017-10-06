@@ -23,6 +23,7 @@ class ExcelScheduleParser {
         var first_sheet_name = doc.SheetNames[0];
         var worksheet = doc.Sheets[first_sheet_name];
         var result = [];
+        console.log(worksheet["I11"], worksheet["B11"]);
         ExcelScheduleParser.GroupCells.forEach(element => {
             result.push(this.parseGroupLessons(worksheet, element));
         });
@@ -49,6 +50,8 @@ class ExcelScheduleParser {
         return new Date(parseInt(nums[2]), parseInt(nums[1]), parseInt(nums[0]), hour[0], hour[1]);
     }
     static getColNumber(col) {
+        if (!col)
+            throw new Error(`getColNumber - invalid argument passed '${col}'`);
         col = col.toLowerCase();
         var ordA = 'a'.charCodeAt(0);
         var ordZ = 'z'.charCodeAt(0);
@@ -59,9 +62,29 @@ class ExcelScheduleParser {
         var s = col.charCodeAt(1);
         return len + this.getColNumber(col[1]);
     }
+    /**
+     * Parse lesson name.
+     * @param worksheet
+     * @param groupId
+     * @param val
+     */
     parseLessonName(worksheet, groupId, val) {
         var lessonCell = groupId + val;
         var lessonCellVal = worksheet[lessonCell];
+        if (!lessonCellVal) {
+            // Get previous col number.
+            var prevCol = ExcelScheduleParser.colName(ExcelScheduleParser.getColNumber(groupId) - 1);
+            // If cell belongs to two groups then original cell value is "undefined"
+            // So if it's the case return value for left cell.            
+            // If previous column is not the time then its just empty column that belongs to both groups,
+            // so we gotta use previous.            
+            if (!worksheet[prevCol + val] || !worksheet[prevCol + val].w) {
+                var left = ExcelScheduleParser.CellToLeftCell[groupId];
+                if (!left)
+                    return "--- No Lesson ---";
+                return this.parseLessonName(worksheet, left, val);
+            }
+        }
         return !lessonCellVal ? "--- No Lesson ---" : lessonCellVal.v;
     }
     parseLessonTeacher(worksheet, groupId, val) {
@@ -119,6 +142,13 @@ class ExcelScheduleParser {
     }
 }
 ExcelScheduleParser.NameToNumberLetter = {};
+ExcelScheduleParser.CellToLeftCell = {
+    "Z": "S",
+    "J": "C",
+    "AP": "AI",
+    "BF": "AY",
+    "BV": "BO",
+};
 ExcelScheduleParser.DaysCells = ["A8", "A21", "A34", "A47", "A60"];
 ExcelScheduleParser.GroupCells = ["C", "J", "S", "Z", "AI", "AP", "AY", "BF", "BO", "BV", "CE"];
 ExcelScheduleParser.DayRange = {
