@@ -122,22 +122,14 @@ bot.use(Telegraf.log())
 // ))
 
 // bot.startPolling()
+var scheduleUrl = 'http://cyber.regi.rovno.ua/rozklad-zanyat/';
 
-bot.command('onetime', ({ reply }) =>
-    reply('One time keyboard', Markup
-        .keyboard(['/simple', '/inline', '/pyramid'])
-        .oneTime()
-        .resize()
-        .extra()
-    )
-)
-
-bot.command('custom', ({ reply }) => {
+bot.command('menu', ({ reply }) => {
     return reply('Custom buttons keyboard', Markup
         .keyboard([
-            ['🔍 Search', '😎 Schedule'], // Row1 with 2 buttons
-            ['☸ Setting', '📞 Feedback'], // Row2 with 2 buttons
-            ['📢 Ads', '⭐️ Rate us', '👥 Share'] // Row3 with 3 buttons
+            ['🔍 Список викладачів', '😎 Розклад'], // Row1 with 2 buttons
+            ['☸ Список спеціальностей', '📞 Контакти'], // Row2 with 2 buttons
+            ['📢 Группа', '⭐️ Оцініти', '👥 Поділитись'] // Row3 with 3 buttons
         ])
         .oneTime()
         .resize()
@@ -172,49 +164,57 @@ bot.command('simple', (ctx) => {
 bot.command('inline', (ctx) => {
     return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup((m) =>
         m.inlineKeyboard([
-            m.callbackButton('Coke', 'Coke'),
-            m.callbackButton('Pepsi', 'Pepsi')
+            m.callbackButton('Test', 'test'),
+            m.callbackButton('Test2', 'test2')
         ])))
 })
 
-bot.command('random', (ctx) => {
-    return ctx.reply('random example',
-        Markup.inlineKeyboard([
-            Markup.callbackButton('Coke', 'Coke'),
-            Markup.callbackButton('Dr Pepper', 'Dr Pepper', Math.random() > 0.5),
-            Markup.callbackButton('Pepsi', 'Pepsi')
-        ]).extra()
+
+bot.hears('🔍 Українська освіта', (ctx) => {
+    request(scheduleUrl, function(error, response, body) {
+        var $ = cheerio.load(body);
+        var uaShedule = $('a.gde-link').eq(0).attr('href');
+        return ctx.reply(uaShedule)
+    });
+})
+bot.hears('😎 Європейська', (ctx) => {
+    request(scheduleUrl, function(error, response, body) {
+        var $ = cheerio.load(body);
+        var euShedule = $('a.gde-link').eq(1).attr('href');
+        return ctx.reply(euShedule)
+    });
+})
+bot.hears('☸ Заочна', (ctx) => {
+    request(scheduleUrl, function(error, response, body) {
+        var $ = cheerio.load(body);
+        var partTimeShedule = $('a.gde-link').eq(2).attr('href');
+        return ctx.reply(partTimeShedule)
+    });
+})
+
+bot.hears('😎 Розклад', (ctx) => {
+    return ctx.reply('Який розклад Ви хочете отримати?', Markup
+        .keyboard([
+            ['🔍 Українська освіта', '😎 Європейська'], // Row1 with 2 buttons
+            ['☸ Заочна'], // Row2 with 2 buttons
+        ])
+        .oneTime()
+        .resize()
+        .extra()
     )
 })
-
-bot.hears('😎 Schedule', (ctx) => {
-    request('http://cyber.regi.rovno.ua/rozklad-zanyat/', function(error, response, body) {
+bot.hears('📞 Контакти', (ctx) => {
+    request(scheduleUrl, function(error, response, body) {
         var $ = cheerio.load(body);
-        var pdfLinks = [];
-        $('a.gde-link').each(function(i, elem) {
-            pdfLinks[i] = $(this).attr('href');
-        });
-        var res = pdfLinks.join('\n');
-        console.log(res)
-        return ctx.reply(res)
-    })
-
-    // return ctx.reply('Keyboard wrap', Extra.markup(
-    //     Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
-    //         columns: parseInt(ctx.match[1])
-    //     })
-    // ))
+        var contactText = $('.textwidget', '#text-6').text();
+        return ctx.reply(contactText);
+    });
 })
-
+bot.hears('📢 Группа', (ctx) => {
+    return ctx.reply()
+})
 bot.on('message', (ctx) => {
-    // if (ctx.text === '😎 Popular') {
-    //     return ctx.reply('Hello there!');
-    // }
-    // return ctx.reply('Hey!');
-})
-
-bot.action('😎 Popular', (ctx, next) => {
-    return ctx.reply('👍').then(next)
+    return ctx.reply('Хай! Щоб ввійти в меню введіть /menu');
 })
 
 bot.action(/.+/, (ctx) => {
