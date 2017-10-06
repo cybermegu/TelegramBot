@@ -71,9 +71,9 @@ app.command(config.commands.OneTime, ({ reply }) =>
 app.command(config.commands.Menu, ({ reply }) => {
     return reply('Головне меню', Markup
         .keyboard([
-            ['🔍 Список викладачів', '😎 Розклад'], // Row1 with 2 buttons
-            ['☸ Список спеціальностей', '📞 Контакти'], // Row2 with 2 buttons
-            ['📢 Група', '⭐️ Оцініти'] // Row3 with 3 buttons
+            ['🔍 Список викладачів', '📅 Розклад'], // Row1 with 2 buttons
+            ['🎓 Спеціальності', '📞 Контакти'], // Row2 with 2 buttons
+            ['📢 Група'] // Row3 with 3 buttons
         ])
         .oneTime()
         .resize()
@@ -113,21 +113,21 @@ app.command('inline', (ctx) => {
         ])))
 })
 
-app.hears('🔍 Українська освіта', (ctx) => {
+app.hears('Українська освіта', (ctx) => {
     request(config.urls.Schedule, function(error, response, body) {
         var $ = cheerio.load(body);
         var uaShedule = $('a.gde-link').eq(0).attr('href');
         return ctx.reply(uaShedule)
     });
 })
-app.hears('😎 Європейська', (ctx) => {
+app.hears('Європейська', (ctx) => {
     request(config.urls.Schedule, function(error, response, body) {
         var $ = cheerio.load(body);
         var euShedule = $('a.gde-link').eq(1).attr('href');
         return ctx.reply(euShedule);
     });
 })
-app.hears('☸ Заочна', (ctx) => {
+app.hears('Заочна', (ctx) => {
     request(config.urls.Schedule, function(error, response, body) {
         var $ = cheerio.load(body);
         var partTimeShedule = $('a.gde-link').eq(2).attr('href');
@@ -135,7 +135,7 @@ app.hears('☸ Заочна', (ctx) => {
     });
 })
 
-app.hears('😎 Розклад', (ctx) => {
+app.hears('📅 Розклад', (ctx) => {
     return ctx.reply('Який розклад Ви хочете отримати?', Markup
         .keyboard([
             ['🔍 Українська освіта', '😎 Європейська'], // Row1 with 2 buttons
