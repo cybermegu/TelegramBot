@@ -69,11 +69,11 @@ app.command(config.commands.OneTime, ({ reply }) =>
 )
 
 app.command(config.commands.Menu, ({ reply }) => {
-    return reply('Custom buttons keyboard', Markup
+    return reply('', Markup
         .keyboard([
             ['🔍 Список викладачів', '😎 Розклад'], // Row1 with 2 buttons
             ['☸ Список спеціальностей', '📞 Контакти'], // Row2 with 2 buttons
-            ['📢 Група', '⭐️ Оцініти', '👥 Поділитись'] // Row3 with 3 buttons
+            ['📢 Група', '⭐️ Оцініти'] // Row3 with 3 buttons
         ])
         .oneTime()
         .resize()
