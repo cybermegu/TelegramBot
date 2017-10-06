@@ -69,7 +69,7 @@ app.command(config.commands.OneTime, ({ reply }) =>
 )
 
 app.command(config.commands.Menu, ({ reply }) => {
-    return reply('', Markup
+    return reply('Головне меню', Markup
         .keyboard([
             ['🔍 Список викладачів', '😎 Розклад'], // Row1 with 2 buttons
             ['☸ Список спеціальностей', '📞 Контакти'], // Row2 with 2 buttons
