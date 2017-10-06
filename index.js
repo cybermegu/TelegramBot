@@ -54,6 +54,4 @@ app.command(config.commands.Schedule, ({state: {command}, reply}) => {
     }    
 });
 
-app.hears('hi', (ctx) => ctx.reply('Hey there!'))
-app.on('sticker', (ctx) => ctx.reply('👍'));
 app.startPolling();
