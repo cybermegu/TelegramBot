@@ -4,12 +4,26 @@
   "description": "Telegram bot for MEGU",
   "main": "index.js",
   "dependencies": {
+    "@types/es6-promise": "0.0.33",
+    "cheerio": "^1.0.0-rc.2",
+    "excel-parser": "^0.2.2",
+    "lodash": "^4.17.4",
     "node-telegram-bot-api": "^0.28.0",
-    "telegraf": "^3.12.1"
+    "node-xlsx": "^0.11.0",
+    "request": "^2.83.0",
+    "telegraf": "^3.12.1",
+    "telegraf-command-parts": "^1.0.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/node": "^8.0.32",
+    "nodemon": "^1.12.1",
+    "telegraf": "^3.12.1",
+    "ts-node": "^3.3.0",
+    "typescript": "^2.5.3"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run build:live",
+    "build:live": "nodemon --exec ./node_modules/.bin/ts-node -- ./*.ts"
   },
   "author": "DannyD",
   "license": "ISC"

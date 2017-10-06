@@ -1,129 +1,63 @@
-// const TelegramBot = require('node-telegram-bot-api');
 const Telegraf = require('telegraf');
 const { reply, Extra, Markup } = Telegraf;
 const request = require('request');
 const cheerio = require('cheerio');
 
-const token = '329099307:AAGYQ0B_7N7PATJLJck6RYmRP620jbzmCDI';
+var _ = require('lodash');
+const commandParts = require('telegraf-command-parts');
 
+// Get bot token from command line args.
+// TODO: Maybe pass via envinronment?
+const token = () => process.argv[2];
+const config = require("./config").config;
+const ScheduleParser = require("./ScheduleParser").ExcelScheduleParser;
+const fs = require('fs');
 
-function nodeTelegramBot() {
-    // // Create a bot that uses 'polling' to fetch new updates
-    // const bot = new TelegramBot(token, { polling: true });
+var parser = new ScheduleParser();
+// TODO: Add file download from the server.
+var groups = parser.parseCourses(`${__dirname}/schedule.xlsx`);
+var schedule;
+groups.then((result) => {
+     schedule = result;
+});
 
-    // // Matches "/echo [whatever]"
-    // bot.onText(/\/echo (.+)/, (msg, match) => {
-    //     // 'msg' is the received Message from Telegram
-    //     // 'match' is the result of executing the regexp above on the text content
-    //     // of the message
+const app = new Telegraf(token());
+app.use(commandParts());
+app.use(Telegraf.log());
 
-    //     const chatId = msg.chat.id;
-    //     const resp = match[1]; // the captured "whatever"
+app.command(config.commands.Start, ({from, reply}) => {
+    console.log("start");
+    return reply("Welcome!");
+});
 
-    //     // send back the matched "whatever" to the chat
-    //     bot.sendMessage(chatId, resp);
-    // });
+app.command(config.commands.Schedule, ({state: {command}, reply}) => {    
+    console.log(command);
+    var group = command.args.toLowerCase().replace("/\s+/", "");
+    reply("Searching... " + group);
+    try {
+        var g = _(schedule).find(g => g.name.toLowerCase().replace("/\s+/", "") == group)
+        console.log(g);
+        if(!g) return reply("Group wasn't found");
+        var lessons = "";
+        for(var day in g.lessons) {
+            console.log(day);        
+            var groupLessons = g.lessons[day];
+            lessons += day + ": \n";
+            for(var i = 0; i < groupLessons.length; i ++) {
+                var l = groupLessons[i];
+                lessons += `${l.name} - ${l.teacher} - Аудиторія: ${l.room}\n`;
+            }
+            lessons += "---------------------------\n"
+        }
+        
+        console.log(lessons);
+        return reply((lessons || "Not found").toString());
+    } catch (e) {
+        return reply(e.message);
+    }    
+});
 
-    // // Listen for any kind of message. There are different kinds of
-    // // messages.
-    // bot.on('message', (msg) => {
-    //     const chatId = msg.chat.id;
-
-    //     var Hi = "hi";
-
-    //     var SheduleTest = '/s';
-    //     var Shedule = "/r";
-    //     var SheduleUrl = "http://cyber.regi.rovno.ua/rozklad-zanyat/";
-    //     var pdfLinks = [];
-
-    //     var Contacts = "/contacts";
-
-    //     var blala = 'Українська освіта стаціонар';
-
-    //     if (msg.text.toLowerCase().indexOf(Hi) === 0) {
-    //         bot.sendMessage(chatId, 'Wasup!');
-    //     } else if (msg.text.toLowerCase().indexOf(Shedule) === 0) {
-    //         request(SheduleUrl, function(error, response, body) {
-    //             var $ = cheerio.load(body);
-    //             $('a.gde-link').each(function(i, elem) {
-    //                 pdfLinks[i] = $(this).attr('href');
-    //             });
-    //             // var ukrainianShedule = $('a.gde-link').eq(0).attr('href');
-    //             var res = pdfLinks.join('\n');
-    //             // console.log(res);
-    //             bot.sendMessage(chatId, res);
-    //         });
-    //     } else if (msg.text.toLowerCase().indexOf(Contacts) === 0) {
-    //         request(SheduleUrl, function(error, response, body) {
-    //             var $ = cheerio.load(body);
-    //             var contactText = $('.textwidget', '#text-6').text();
-    //             bot.sendMessage(chatId, contactText);
-    //         });
-    //     } else if (msg.text.toLowerCase().indexOf(SheduleTest) === 0) {
-    //         const opts = {
-    //             reply_to_message_id: msg.message_id,
-    //             reply_markup: JSON.stringify({
-    //                 keyboard: [
-    //                     ['Українська освіта стаціонар'],
-    //                     ['Європейська освіта стаціонар'],
-    //                     ['Українська освіта заочне']
-    //                 ]
-    //             })
-    //         };
-    //         bot.sendMessage(msg.chat.id, 'Який розклад потрібен?', opts);
-    //         // if (msg.text('Українська освіта стаціонар') === 0) {
-    //         //     request(SheduleUrl, function(error, response, body) {
-    //         //         var $ = cheerio.load(body);
-    //         //         var ukrainianShedule = $('a.gde-link').eq(1).text();
-    //         //         bot.sendMessage(chatId, ukrainianShedule);
-    //         //     });
-    //         // }
-    //     }
-    // });
-    // bot.on('callback_query', function onCallbackQuery(callbackQuery) {
-    //     const action = callbackQuery.data;
-    //     const msg = callbackQuery.message;
-    //     const opts = {
-    //         chat_id: msg.chat.id,
-    //         message_id: msg.message_id,
-    //     };
-    //     let text;
-
-    //     if (action === 'edit') {
-    //         text = 'Edited Text';
-    //     }
-
-    //     bot.editMessageText(text, opts);
-    // });
-}
-
-const bot = new Telegraf(token);
-bot.use(Telegraf.log())
-
-// bot.command('start', ({ from, reply }) => {
-//     console.log('start', from)
-//     return reply('Welcome!')
-// })
-// bot.hears('hi', (ctx) => ctx.reply('Hey there!'))
-// bot.on('sticker', (ctx) => ctx.reply('👍'))
-// bot.command('/oldschool', (ctx) => ctx.reply('Hello'))
-// bot.command('/modern', ({ reply }) => reply('Yo'))
-// bot.command('/r', (ctx) => (
-//     request('http://cyber.regi.rovno.ua/rozklad-zanyat/', function(error, response, body) {
-//         var $ = cheerio.load(body);
-//         var pdfLinks = [];
-//         $('a.gde-link').each(function(i, elem) {
-//             pdfLinks[i] = $(this).attr('href');
-//         });
-//         var res = pdfLinks.join('\n');
-//         console.log(res)
-//         return ctx.reply(res)
-//     })
-// ))
-
-// bot.startPolling()
-
-bot.command('onetime', ({ reply }) =>
+app.command(config.commands.OneTime, ({ reply }) =>
     reply('One time keyboard', Markup
         .keyboard(['/simple', '/inline', '/pyramid'])
         .oneTime()
@@ -132,7 +66,7 @@ bot.command('onetime', ({ reply }) =>
     )
 )
 
-bot.command('custom', ({ reply }) => {
+app.command(config.commands.Custom, ({ reply }) => {
     return reply('Custom buttons keyboard', Markup
         .keyboard([
             ['🔍 Search', '😎 Schedule'], // Row1 with 2 buttons
@@ -145,7 +79,7 @@ bot.command('custom', ({ reply }) => {
     )
 })
 
-bot.command('special', (ctx) => {
+app.command('special', (ctx) => {
     return ctx.reply('Special buttons keyboard', Extra.markup((markup) => {
         return markup.resize()
             .keyboard([
@@ -155,7 +89,7 @@ bot.command('special', (ctx) => {
     }))
 })
 
-bot.command('pyramid', (ctx) => {
+app.command(config.commands.Pyramid, (ctx) => {
     return ctx.reply('Keyboard wrap', Extra.markup(
         Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
             wrap: (btn, index, currentRow) => currentRow.length >= (index + 1) / 2
@@ -163,13 +97,13 @@ bot.command('pyramid', (ctx) => {
     ))
 })
 
-bot.command('simple', (ctx) => {
+app.command(config.commands.Simple, (ctx) => {
     return ctx.replyWithHTML('<b>Coke</b> or <i>Pepsi?</i>', Extra.markup(
         Markup.keyboard(['Coke', 'Pepsi'])
     ))
 })
 
-bot.command('inline', (ctx) => {
+app.command('inline', (ctx) => {
     return ctx.reply('<b>Coke</b> or <i>Pepsi?</i>', Extra.HTML().markup((m) =>
         m.inlineKeyboard([
             m.callbackButton('Coke', 'Coke'),
@@ -177,7 +111,7 @@ bot.command('inline', (ctx) => {
         ])))
 })
 
-bot.command('random', (ctx) => {
+app.command(config.commands.Random, (ctx) => {
     return ctx.reply('random example',
         Markup.inlineKeyboard([
             Markup.callbackButton('Coke', 'Coke'),
@@ -187,8 +121,8 @@ bot.command('random', (ctx) => {
     )
 })
 
-bot.hears('😎 Schedule', (ctx) => {
-    request('http://cyber.regi.rovno.ua/rozklad-zanyat/', function(error, response, body) {
+app.hears('😎 Schedule', (ctx) => {
+    request(config.urls.Schedule, function(error, response, body) {
         var $ = cheerio.load(body);
         var pdfLinks = [];
         $('a.gde-link').each(function(i, elem) {
@@ -197,28 +131,18 @@ bot.hears('😎 Schedule', (ctx) => {
         var res = pdfLinks.join('\n');
         console.log(res)
         return ctx.reply(res)
-    })
+    });
+});
 
-    // return ctx.reply('Keyboard wrap', Extra.markup(
-    //     Markup.keyboard(['one', 'two', 'three', 'four', 'five', 'six'], {
-    //         columns: parseInt(ctx.match[1])
-    //     })
-    // ))
-})
+app.on('message', (ctx) => {  
+});
 
-bot.on('message', (ctx) => {
-    // if (ctx.text === '😎 Popular') {
-    //     return ctx.reply('Hello there!');
-    // }
-    // return ctx.reply('Hey!');
-})
-
-bot.action('😎 Popular', (ctx, next) => {
+app.action('😎 Popular', (ctx, next) => {
     return ctx.reply('👍').then(next)
-})
+});
 
-bot.action(/.+/, (ctx) => {
+app.action(/.+/, (ctx) => {
     return ctx.answerCallbackQuery(`Oh, ${ctx.match[0]}! Great choise`)
-})
+});
 
-bot.startPolling()
+app.startPolling();
