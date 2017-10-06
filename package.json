@@ -10,6 +10,7 @@
     "lodash": "^4.17.4",
     "node-telegram-bot-api": "^0.28.0",
     "node-xlsx": "^0.11.0",
+    "request": "^2.83.0",
     "telegraf": "^3.12.1",
     "telegraf-command-parts": "^1.0.3"
   },

@@ -76,10 +76,10 @@ class ExcelScheduleParser implements IScheduleParser {
     static getLessonDate(worksheet: any, groupId: string, val: number, day: number, range: number[]) : Date {
         var hourIndex = Math.floor((val - range[0]) / range[0]) + 1;
         var dateString : string = worksheet[ExcelScheduleParser.DayToDateCell[day]].v;
-        console.log(dateString);
+        //console.log(dateString);
         var nums = dateString.split(" ")[1].split(".");
         var hour = (ExcelScheduleParser.HourIndexToLessonHour[hourIndex] || [0, 0]);
-        console.log(hour, hourIndex, val);
+        //console.log(hour, hourIndex, val);
         return new Date(parseInt(nums[2]), parseInt(nums[1]), parseInt(nums[0]),  hour[0], hour[1]);
     }    
 
@@ -129,7 +129,7 @@ class ExcelScheduleParser implements IScheduleParser {
     }
 
     parseLesson(worksheet: any, groupId: string, val: number, range: number[], day: number) : Lesson {
-        console.log(val);
+        //console.log(val);
         return new Lesson(
             this.parseLessonName(worksheet, groupId, val),
             this.parseLessonNumber(worksheet, groupId, val),

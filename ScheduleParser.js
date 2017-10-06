@@ -42,10 +42,10 @@ class ExcelScheduleParser {
     static getLessonDate(worksheet, groupId, val, day, range) {
         var hourIndex = Math.floor((val - range[0]) / range[0]) + 1;
         var dateString = worksheet[ExcelScheduleParser.DayToDateCell[day]].v;
-        console.log(dateString);
+        //console.log(dateString);
         var nums = dateString.split(" ")[1].split(".");
         var hour = (ExcelScheduleParser.HourIndexToLessonHour[hourIndex] || [0, 0]);
-        console.log(hour, hourIndex, val);
+        //console.log(hour, hourIndex, val);
         return new Date(parseInt(nums[2]), parseInt(nums[1]), parseInt(nums[0]), hour[0], hour[1]);
     }
     static getColNumber(col) {
@@ -86,7 +86,7 @@ class ExcelScheduleParser {
         return -1;
     }
     parseLesson(worksheet, groupId, val, range, day) {
-        console.log(val);
+        //console.log(val);
         return new Lesson(this.parseLessonName(worksheet, groupId, val), this.parseLessonNumber(worksheet, groupId, val), this.parseLessonTeacher(worksheet, groupId, val), ExcelScheduleParser.getLessonDate(worksheet, groupId, val, day, range));
     }
     parseDay(worksheet, groupId, range, day) {
