@@ -1,19 +1,14 @@
 const xlsx = require("node-xlsx");
 const xlsx1 = require("xlsx");
 const excelParser = require("excel-parser");
-
+const _ = require("lodash");
 class Lesson {
-    constructor(public name: string, public room: number, public teacher: string) {
-        this.name = name;
-        this.room = room;
-        this.teacher = teacher;
+    constructor(public name: string, public room: number, public teacher: string, public dateTime: Date) {        
     }
 }
 
 class Group {
-    constructor(public name: string, public lessons: { [day: string]: Lesson[]}) {
-        this.name = name;
-        this.lessons = lessons;
+    constructor(public name: string, public lessons: { [day: string]: Lesson[]}) {        
     }
 }
 
@@ -63,6 +58,31 @@ class ExcelScheduleParser implements IScheduleParser {
         return s.toUpperCase();
     }
 
+    static DayToDateCell : {[day: number]: string} = {
+        1: "A8",
+        2: "A21",
+        3: "A34",
+        4: "A47",
+        5: "A60"
+    };
+
+    static HourIndexToLessonHour : {[idx: number]: number[]}= {
+        1: [8, 30],
+        2: [10, 0],
+        3: [11,30],
+        4: [13, 0]
+    }
+
+    static getLessonDate(worksheet: any, groupId: string, val: number, day: number, range: number[]) : Date {
+        var hourIndex = Math.floor((val - range[0]) / range[0]) + 1;
+        var dateString : string = worksheet[ExcelScheduleParser.DayToDateCell[day]].v;
+        console.log(dateString);
+        var nums = dateString.split(" ")[1].split(".");
+        var hour = (ExcelScheduleParser.HourIndexToLessonHour[hourIndex] || [0, 0]);
+        console.log(hour, hourIndex, val);
+        return new Date(parseInt(nums[2]), parseInt(nums[1]), parseInt(nums[0]),  hour[0], hour[1]);
+    }    
+
     static getColNumber(col: string) : number {
         col = col.toLowerCase();
         var ordA = 'a'.charCodeAt(0);
@@ -98,8 +118,7 @@ class ExcelScheduleParser implements IScheduleParser {
             var nextCol = ExcelScheduleParser.colName(colNumber + 1);
             var colAddr= nextCol + val;
             var col = worksheet[colAddr];
-            if(col && col.t == "n" && col.v > 1) {
-                console.log("Found number for " + groupId + val, col.v);
+            if(col && col.t == "n" && col.v > 1) {                
                 return col.v;
             }
             colNumber ++;
@@ -109,18 +128,20 @@ class ExcelScheduleParser implements IScheduleParser {
         return -1;
     }
 
-    parseLesson(worksheet: any, groupId: string, val: number) : Lesson {
+    parseLesson(worksheet: any, groupId: string, val: number, range: number[], day: number) : Lesson {
+        console.log(val);
         return new Lesson(
             this.parseLessonName(worksheet, groupId, val),
             this.parseLessonNumber(worksheet, groupId, val),
-            this.parseLessonTeacher(worksheet, groupId, val)
+            this.parseLessonTeacher(worksheet, groupId, val),
+            ExcelScheduleParser.getLessonDate(worksheet, groupId, val, day, range)
         );
     }
 
-    parseDay(worksheet: any, groupId: string, range: number[]) : Lesson[] {
+    parseDay(worksheet: any, groupId: string, range: number[], day: number) : Lesson[] {
         var result : Lesson[] = [];
         range.forEach(val => { 
-            result.push(this.parseLesson(worksheet, groupId, val));            
+            result.push(this.parseLesson(worksheet, groupId, val, range, day));            
         });
 
         return result;
@@ -128,12 +149,11 @@ class ExcelScheduleParser implements IScheduleParser {
 
     parseGroupLessons(worksheet: any, groupId: string) : Group {        
         var groupNameId = groupId + "6";
-        var group = new Group(worksheet[groupNameId].v, {});
-        console.log("Processing ", group.name);
+        var group = new Group(worksheet[groupNameId].v, {});        
         for(var day = 0; day < 5; day ++) {
             var key = Object.keys(ExcelScheduleParser.DayRange)[day];
             var range = ExcelScheduleParser.DayRange[key];
-            group.lessons[key] = this.parseDay(worksheet, groupId, range);
+            group.lessons[key] = this.parseDay(worksheet, groupId, range, day + 1);
         }
 
         return group;        

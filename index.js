@@ -13,7 +13,7 @@ var parser = new ScheduleParser();
 var groups = parser.parseCourses(`${__dirname}/schedule.xlsx`);
 var schedule;
 groups.then((result) => {
-    console.log("Groups", schedule = result);
+     schedule = result;
 });
 
 
@@ -42,7 +42,7 @@ app.command(config.commands.Schedule, ({state: {command}, reply}) => {
             lessons += day + ": \n";
             for(var i = 0; i < groupLessons.length; i ++) {
                 var l = groupLessons[i];
-                lessons += `${l.name} ${l.teacher} ${l.room}\n`;
+                lessons += `${l.name} - ${l.teacher} - Аудиторія: ${l.room}\n`;
             }
             lessons += "---------------------------\n"
         }

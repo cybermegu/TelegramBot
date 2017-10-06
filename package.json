@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@types/es6-promise": "0.0.33",
+    "cheerio": "^1.0.0-rc.2",
     "excel-parser": "^0.2.2",
     "lodash": "^4.17.4",
     "node-telegram-bot-api": "^0.28.0",
